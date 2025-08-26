@@ -1,6 +1,6 @@
 # README
 
-Author: `<your name here>`
+Author: `Prateek Narendra`
 
 ## How to run
 
@@ -19,4 +19,4 @@ $ go run main.go --auth=<token>
 
 ## Discard criteria
 
-`<your chosen discard criteria and rationale here>`
+The discard criteria is based on the lowest freshness score from the room-temperature/open shelf.
