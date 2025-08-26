@@ -17,9 +17,15 @@ func ComputeFreshness(o *model.OrderWrapper) float64 {
 	default:
 		ideal = model.Shelf
 	}
+	// If its not in the ideal storage, it decays twice as fast.
 	if o.Storage != ideal {
 		multiplier = 2.0
 	}
+	// Freshness decays linearly over time.
+	// freshness = initial_freshness - decay_rate * time_elapsed
+	// where decay_rate is 1 per second in ideal storage, 2 per second otherwise
+	// time_elapsed is in seconds
+	// So we can compute freshness as:
 	decay := time.Since(o.PlacedAt).Seconds() * multiplier
 	return float64(o.Order.Freshness) - decay
 }
