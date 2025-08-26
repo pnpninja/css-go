@@ -43,6 +43,8 @@ func (s *Storage) Remove(id string) *model.OrderWrapper {
 	return o
 }
 
+// MoveTo tries to move any order from this storage to the destination storage.
+// It returns the moved order, or nil if none could be moved.
 func (s *Storage) MoveTo(dest *Storage) *model.OrderWrapper {
 	s.Lock()
 	defer s.Unlock()
@@ -55,6 +57,7 @@ func (s *Storage) MoveTo(dest *Storage) *model.OrderWrapper {
 	return nil
 }
 
+// DiscardWorst removes and returns the order with the lowest freshness score
 func (s *Storage) DiscardWorst(computeFreshness func(*model.OrderWrapper) float64) *model.OrderWrapper {
 	s.Lock()
 	defer s.Unlock()
