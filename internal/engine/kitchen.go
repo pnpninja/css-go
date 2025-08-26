@@ -17,11 +17,11 @@ type Kitchen struct {
 	LogFn   func(model.Action)
 }
 
-func NewKitchen(logFn func(model.Action), actions *[]model.Action) *Kitchen {
+func NewKitchen(logFn func(model.Action), actions *[]model.Action, heatShelfSize int, coolShelfSize int, normalShelfSize int) *Kitchen {
 	return &Kitchen{
-		Heater:  NewStorage(model.Heater, 6),
-		Cooler:  NewStorage(model.Cooler, 6),
-		Shelf:   NewStorage(model.Shelf, 12),
+		Heater:  NewStorage(model.Heater, heatShelfSize),
+		Cooler:  NewStorage(model.Cooler, coolShelfSize),
+		Shelf:   NewStorage(model.Shelf, normalShelfSize),
 		Orders:  make(map[string]*model.OrderWrapper),
 		Actions: actions,
 		LogFn:   logFn,

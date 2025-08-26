@@ -18,9 +18,12 @@ var (
 	name     = flag.String("name", "", "Problem name (optional)")
 	seed     = flag.Int64("seed", 0, "Problem seed (random if zero)")
 
-	rate = flag.Duration("rate", 500*time.Millisecond, "Time between placing orders")
-	min  = flag.Duration("min", 4*time.Second, "Minimum pickup delay")
-	max  = flag.Duration("max", 8*time.Second, "Maximum pickup delay")
+	rate            = flag.Duration("rate", 500*time.Millisecond, "Time between placing orders")
+	min             = flag.Duration("min", 4*time.Second, "Minimum pickup delay")
+	max             = flag.Duration("max", 8*time.Second, "Maximum pickup delay")
+	heatShelfSize   = flag.Int("heat-shelf", 6, "Heated shelf size")
+	coolShelfSize   = flag.Int("cool-shelf", 6, "Cooler shelf size")
+	normalShelfSize = flag.Int("normal-shelf", 12, "Normal shelf size")
 )
 
 func main() {
@@ -47,7 +50,7 @@ func main() {
 		mu.Unlock()
 	}
 
-	kitchen := engine.NewKitchen(sink, &actions)
+	kitchen := engine.NewKitchen(sink, &actions, *heatShelfSize, *coolShelfSize, *normalShelfSize)
 
 	// Convert client.Order to model.Order
 	for _, o := range rawOrders {
