@@ -45,6 +45,7 @@ func (s *Storage) Remove(id string) *model.OrderWrapper {
 
 // MoveTo tries to move any order from this storage to the destination storage.
 // It returns the moved order, or nil if none could be moved.
+// This is used from room-temperature shelf to ideal storage.
 func (s *Storage) MoveTo(dest *Storage) *model.OrderWrapper {
 	s.Lock()
 	defer s.Unlock()
@@ -62,7 +63,7 @@ func (s *Storage) DiscardWorst(computeFreshness func(*model.OrderWrapper) float6
 	s.Lock()
 	defer s.Unlock()
 	var worst *model.OrderWrapper
-	worstScore := 1e9
+	worstScore := 1e9 // effectively infinity to find the order with the lowest freshness score.
 	for _, o := range s.Orders {
 		score := computeFreshness(o)
 		if score < worstScore {

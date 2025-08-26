@@ -28,6 +28,7 @@ func NewKitchen(logFn func(model.Action), actions *[]model.Action, heatShelfSize
 	}
 }
 
+// log places an action in the actions log.
 func (k *Kitchen) log(action model.ActionType, id string, target model.StorageType) {
 	act := model.Action{
 		Timestamp: time.Now().UnixMicro(),
@@ -38,6 +39,11 @@ func (k *Kitchen) log(action model.ActionType, id string, target model.StorageTy
 	k.LogFn(act)
 }
 
+// Place tries to place the order in its ideal storage.
+// If the ideal storage is full, it tries to place it in the room-temperature shelf.
+// If the shelf is also full, it tries to move one misplaced order from shelf to its ideal storage.
+// If that fails, it discards the order with the lowest freshness score from the shelf
+// and places the new order in the shelf.
 func (k *Kitchen) Place(order model.Order) {
 	o := &model.OrderWrapper{
 		Order:    order,
@@ -51,6 +57,10 @@ func (k *Kitchen) Place(order model.Order) {
 	var target *Storage = k.idealStorage(order.Temp)
 	if !target.Add(o) {
 		if !k.Shelf.Add(o) {
+			// Try to move one misplaced order from shelf to its ideal storage.
+			// This check is done because of concurrency - another goroutine
+			// might have moved an order in the meantime.
+			// If we succeed, we can add the new order to shelf.
 			if k.tryMoveToIdeal(order.Temp) {
 				k.Shelf.Add(o)
 				k.log(model.Place, o.Order.ID, model.Shelf)
@@ -68,9 +78,11 @@ func (k *Kitchen) Place(order model.Order) {
 	k.log(model.Place, o.Order.ID, target.Type)
 }
 
+// Pickup removes the order from kitchen and logs either a Pickup or Discard action
+// depending on whether the order is still fresh or not.
 func (k *Kitchen) Pickup(id string) {
 	k.Mutex.Lock()
-	o, ok := k.Orders[id]
+	order, ok := k.Orders[id]
 	if ok {
 		delete(k.Orders, id)
 	}
@@ -79,14 +91,14 @@ func (k *Kitchen) Pickup(id string) {
 		return
 	}
 
-	isFresh := ComputeFreshness(o) > 0
+	isFresh := ComputeFreshness(order) > 0
 	if !isFresh {
-		k.log(model.Discard, id, o.Storage)
+		k.log(model.Discard, id, order.Storage)
 	} else {
-		k.log(model.Pickup, id, o.Storage)
+		k.log(model.Pickup, id, order.Storage)
 	}
 
-	switch o.Storage {
+	switch order.Storage {
 	case model.Heater:
 		k.Heater.Remove(id)
 	case model.Cooler:
@@ -107,6 +119,9 @@ func (k *Kitchen) idealStorage(temp string) *Storage {
 	}
 }
 
+// tryMoveToIdeal tries to move one misplaced order
+// from room-temperature shelf to its ideal storage.
+// It returns true if an order was moved, false otherwise.
 func (k *Kitchen) tryMoveToIdeal(temp string) bool {
 	var moved *model.OrderWrapper
 	if temp == "hot" {
